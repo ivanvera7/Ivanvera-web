@@ -1,0 +1,16 @@
+# Binarios y medios: no aportan al grafo
+assets/
+favicon/
+docs/*.jpg
+*.woff2
+*.jpg
+*.png
+*.svg
+
+# Solo desarrollo / herramientas
+.impeccable/
+.superpowers/
+.idea/
+*.iml
+.DS_Store
+graphify-out/

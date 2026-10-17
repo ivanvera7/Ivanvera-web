@@ -71,6 +71,8 @@ Ivanvera-web/
 ├── index.html          # Estructura y todos los contenidos
 ├── styles.css          # Sistema visual, componentes y responsive
 ├── script.js           # Resaltado, ejecución del hero, pestañas, copiar, nav (IIFE, vanilla JS)
+├── scripts/check.mjs   # Verificación sin dependencias (también en CI)
+├── AGENTS.md           # Contexto para agentes de IA (CLAUDE.md lo importa)
 ├── PRODUCT.md          # A quién va dirigida la web y qué no se debe inventar
 ├── DESIGN.md           # Sistema de diseño (tokens, tipografía, componentes)
 ├── assets/
@@ -123,6 +125,12 @@ python3 -m http.server 8099
 Abre **http://localhost:8099**
 
 > Cualquier otro servidor sirve: `npx serve`, `php -S localhost:8099`, etc.
+
+Para verificar el sitio (sintaxis JS, archivos referenciados, `alt`, IDs/anclas y variables CSS) solo hace falta Node:
+
+```bash
+node scripts/check.mjs
+```
 
 ## 🌐 Despliegue
 
