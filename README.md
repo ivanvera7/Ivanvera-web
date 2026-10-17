@@ -15,7 +15,9 @@
 
 **[Web en vivo](https://ivanvera7.github.io/Ivanvera-web/)** · **[LinkedIn](https://www.linkedin.com/in/ivanvera7/)** · **[Instagram](https://www.instagram.com/ivanvera7_/)** · **[GitHub](https://github.com/ivanvera7)** · **[Email](mailto:ivan99vera1@gmail.com)**
 
-<img src="docs/preview.jpg" alt="Hero de la web: el nombre Ivan Vera a la izquierda y un holograma 3D de partículas verdes con las iniciales IV a la derecha" width="900">
+<img src="docs/hero.webp" alt="Animación del hero: el nombre Ivan Vera entra, el holograma 3D de partículas verdes forma IV, se aparta del ratón y cambia a </> y a una esfera al hacer clic" width="900">
+
+<sub>Grabación real de la web: el holograma reacciona al ratón y cambia de forma con cada clic</sub>
 
 </div>
 
@@ -58,9 +60,9 @@ Tres hologramas de partículas, escritos a mano en **WebGL** (sin Three.js ni ot
 3. **Stack**: cada logo de herramienta es un holograma con **sus colores reales**, sacados de los píxeles del SVG original (Claude naranja, SQL verde, Java rojo y azul…). Al pasar el ratón, gira y se abre.
 
 <div align="center">
-<img src="docs/preview-stack.jpg" alt="Apartado del stack: barras de nivel y los logos de las herramientas convertidos en hologramas de partículas con sus colores reales" width="900">
+<img src="docs/stack.webp" alt="Animación del stack: el ratón recorre los logos de Java, SQL, TypeScript, HTML/CSS, Claude, ChatGPT, opencode, GitHub e IntelliJ, convertidos en hologramas de partículas con sus colores reales, y cada uno gira al pasar por encima" width="900">
 <br>
-<sub>Stack · cada logo es un holograma de partículas con sus colores reales</sub>
+<sub>Stack · cada logo es un holograma de partículas con sus colores reales y gira al pasar el ratón</sub>
 </div>
 
 ## ✨ Características
@@ -110,8 +112,8 @@ Ivanvera-web/
 │   ├── favicon.png             # Versión grande (512×512)
 │   └── apple-touch-icon.png    # Icono para iOS (180×180)
 ├── docs/
-│   ├── preview.jpg             # Captura del hero con el holograma (este README)
-│   ├── preview-stack.jpg       # Captura del stack con los logos en holograma
+│   ├── hero.webp               # Animación del hero con el holograma (este README)
+│   ├── stack.webp              # Animación del stack con los logos en holograma
 │   └── superpowers/specs/      # Especificación de diseño
 └── .gitignore
 ```
