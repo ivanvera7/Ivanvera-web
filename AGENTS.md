@@ -39,6 +39,9 @@ No hay instalación, build ni tests unitarios. Despliegue: push a `main`
 - **Todo el código mostrado en la web es real** (sacado de los repos de Iván).
 - **El contenido debe verse sin JS**: `script.js` solo añade movimiento e interacción.
 - **Accesibilidad WCAG 2.2 AA**: contraste, teclado, foco visible y `prefers-reduced-motion`.
-- **Cuida el rendimiento en móvil**: el fondo se pausa con la pestaña oculta y
-  va a 30 fps en móvil. Instagram se carga bajo demanda.
+- **Cuida el rendimiento en móvil**: el holograma WebGL del hero se pausa fuera de
+  pantalla o con la pestaña oculta y usa menos partículas en móvil.
+  Instagram se carga bajo demanda.
+- **Identidad**: negro y verde fósforo (`--green` en `:root`). Archivo para titulares,
+  Hubot Sans para texto, JetBrains Mono solo para código.
 - Si cambias la estructura o las funciones, actualiza `README.md`.

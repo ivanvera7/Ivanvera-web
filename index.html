@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ivan Vera</title>
   <meta name="description" content="Estudiante de Desarrollo de Aplicaciones Multiplataforma en Madrid. Proyectos en Java y dos webs publicadas con TypeScript. Portafolio y contacto.">
-  <meta name="theme-color" content="#0b0d10">
+  <meta name="theme-color" content="#040605">
   <meta name="color-scheme" content="dark">
   <meta property="og:type" content="profile">
   <meta property="og:title" content="Ivan Vera">
@@ -17,7 +17,7 @@
   <link rel="icon" href="favicon/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/hubot-sans.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="assets/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script>document.documentElement.classList.add('js')</script>
 </head>
@@ -25,17 +25,12 @@
 
   <a class="skip" href="#sobre-mi">Saltar al contenido</a>
 
-  <div class="bg" aria-hidden="true">
-    <div class="bg-grid"></div>
-    <canvas class="bg-code" id="bgCode"></canvas>
-    <div class="bg-glow" id="bgGlow"></div>
-  </div>
   <div class="progress" aria-hidden="true"><span id="progress"></span></div>
 
-  <header class="topbar" id="topbar">
+    <header class="topbar" id="topbar">
     <div class="topbar-inner">
       <a class="brand" href="#inicio" aria-label="Ivan Vera — inicio">
-        <span class="brand-mark" aria-hidden="true"></span>Ivan Vera<span class="brand-sub">Web</span>
+        <svg class="brand-mark" viewBox="11 18 42.5 28" aria-hidden="true"><rect x="11" y="18" width="8.5" height="28" fill="currentColor"/><path d="M22.5 18h9l6.5 18.5L44.5 18h9L43 46h-10Z" fill="currentColor"/></svg>Ivan Vera<span class="brand-sub">Web</span>
       </a>
 
       <button class="burger" id="burger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu">
@@ -58,10 +53,13 @@
 
     <!-- ============ 1. HERO ============ -->
     <section class="hero" id="inicio">
-      <div class="hero-light" aria-hidden="true"><span></span><span></span></div>
-      <div class="wrap split split--hero">
+      <canvas class="holo-gl" id="holoGL" aria-hidden="true"></canvas>
+      <div class="wrap hero-grid">
         <div class="hero-copy">
-          <h1 class="hero-name" aria-label="Ivan Vera"><span id="typed" aria-hidden="true">Ivan Vera</span><span class="caret" aria-hidden="true"></span></h1>
+          <h1 class="hero-name" aria-label="Ivan Vera">
+            <span class="hn-line" aria-hidden="true"><span>Ivan</span></span>
+            <span class="hn-line" aria-hidden="true"><span>Vera</span></span>
+          </h1>
           <p class="lede" data-enter>
             27 años, paraguayo, en Madrid. Estudio Desarrollo de Aplicaciones Multiplataforma (FP DAM)
             con foco en <b>Java</b>, <b>SQL</b> y tecnologías emergentes como la <b>IA</b>.
@@ -73,35 +71,14 @@
           <p class="status" data-enter><span class="status-dot" aria-hidden="true"></span>Disponible para proyectos · Madrid, ES</p>
         </div>
 
-        <figure class="panel panel--hero" data-enter aria-label="Ejercicio de Variables en Java y su salida por consola">
-          <div class="panel-bar">
-            <span class="panel-file">Main.java</span>
-            <span class="panel-path">Ejercicio2-Variables</span>
-            <button class="panel-btn run" id="runBtn" type="button">
-              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 2.8v10.4a.6.6 0 0 0 .9.5l8.2-5.2a.6.6 0 0 0 0-1L5.4 2.3a.6.6 0 0 0-.9.5Z" fill="currentColor"/></svg>
-              Ejecutar
-            </button>
+        <div class="holo-ui" data-enter>
+          <div class="holo-shapes" role="group" aria-label="Forma del holograma">
+            <button type="button" class="holo-chip" data-shape="0" aria-pressed="true">IV</button>
+            <button type="button" class="holo-chip" data-shape="1" aria-pressed="false">&lt;/&gt;</button>
+            <button type="button" class="holo-chip" data-shape="2" aria-pressed="false">Esfera</button>
           </div>
-<pre class="panel-code"><code data-lang="java">// Variables
-String nombre = "Ivan";
-String ciudad = "Madrid";
-int edad = 27;
-double altura = 1.79;
-
-// Mostrar en Pantalla
-System.out.println("Me llamo " + nombre);
-System.out.println("Tengo " + edad + " años");
-System.out.println("Vivo en " + ciudad);
-System.out.println("Mido " + altura + " metros");</code></pre>
-          <div class="console">
-            <div class="console-bar">Terminal</div>
-            <pre class="console-out" id="consoleOut" aria-live="polite"><span class="c-cmd"><span class="c-prompt">$</span> java Main.java</span>
-<span class="c-line">Me llamo Ivan</span>
-<span class="c-line">Tengo 27 años</span>
-<span class="c-line">Vivo en Madrid</span>
-<span class="c-line">Mido 1.79 metros</span></pre>
-          </div>
-        </figure>
+          <p class="holo-hint"><span class="hint-fine">Pasa el ratón por el holograma · clic para cambiar de forma</span><span class="hint-touch">Toca el holograma para cambiar de forma</span></p>
+        </div>
       </div>
     </section>
 
@@ -112,7 +89,7 @@ System.out.println("Mido " + altura + " metros");</code></pre>
           <h2 class="sec-title reveal">Quién hay detrás del terminal</h2>
 
           <figure class="portrait reveal">
-            <img src="assets/avatar.jpg" alt="Iván Vera de espaldas, con mochila, frente a un acantilado y el mar" width="512" height="512" loading="lazy">
+            <span class="portrait-frame tilt"><img src="assets/avatar.jpg" alt="Iván Vera de espaldas, con mochila, frente a un acantilado y el mar" width="512" height="512" loading="lazy"></span>
             <figcaption>
               <b>Iván Vera</b>
               <a href="https://github.com/ivanvera7" target="_blank" rel="noopener">@ivanvera7</a>
@@ -203,30 +180,32 @@ System.out.println("Mido " + altura + " metros");</code></pre>
       </div>
 
       <div class="wrap">
+        <div class="tools-stage" id="toolsStage">
         <ul class="tools reveal" aria-label="Tecnologías y herramientas que uso">
-          <li><img src="assets/logos/java.svg" alt="" width="28" height="28">Java</li>
-          <li><img src="assets/logos/sql.svg" alt="" width="28" height="28">SQL</li>
-          <li><img src="assets/logos/typescript.svg" alt="" width="28" height="28">TypeScript</li>
-          <li><span class="tool-pair"><img src="assets/logos/html5.svg" alt="" width="24" height="24"><img src="assets/logos/css3.svg" alt="" width="24" height="24"></span>HTML / CSS</li>
-          <li><img src="assets/logos/claude.svg" alt="" width="28" height="28">Claude</li>
-          <li><img src="assets/logos/chatgpt.svg" alt="" width="28" height="28">ChatGPT</li>
-          <li><img src="assets/logos/opencode.svg" alt="" width="28" height="28">opencode</li>
-          <li><img src="assets/logos/github.svg" alt="" width="28" height="28">GitHub</li>
-          <li><img src="assets/logos/intellij.svg" alt="" width="28" height="28">IntelliJ</li>
-        </ul>
+              <li><img src="assets/logos/java.svg" alt="" width="28" height="28">Java</li>
+              <li><img src="assets/logos/sql.svg" alt="" width="28" height="28">SQL</li>
+              <li><img src="assets/logos/typescript.svg" alt="" width="28" height="28">TypeScript</li>
+              <li><span class="tool-pair"><img src="assets/logos/html5.svg" alt="" width="24" height="24"><img src="assets/logos/css3.svg" alt="" width="24" height="24"></span>HTML / CSS</li>
+              <li><img src="assets/logos/claude.svg" alt="" width="28" height="28">Claude</li>
+              <li><img src="assets/logos/chatgpt.svg" alt="" width="28" height="28">ChatGPT</li>
+              <li><img src="assets/logos/opencode.svg" alt="" width="28" height="28">opencode</li>
+              <li><img src="assets/logos/github.svg" alt="" width="28" height="28">GitHub</li>
+              <li><img src="assets/logos/intellij.svg" alt="" width="28" height="28">IntelliJ</li>
+          </ul>
+          <canvas class="tools-gl" id="toolsGL" aria-hidden="true"></canvas>
+        </div>
       </div>
     </section>
 
     <!-- ============ 4. PROYECTOS ============ -->
     <section class="section" id="proyectos">
       <div class="wrap">
-        <h2 class="sec-title reveal">2 webs en TypeScript<br><span class="dim">+ 5 ejercicios de Java</span></h2>
+        <h2 class="sec-title reveal">Proyectos</h2>
       </div>
 
       <!-- webs publicadas -->
       <article class="wrap split project reveal">
         <div class="prose">
-          <p class="project-meta">TypeScript · Next.js 14</p>
           <h3 class="project-title">Servitek-web</h3>
           <p>Sitio corporativo de SERVITEK E.A.S., electromecánica industrial en Paraguay. Next.js 14, TypeScript estricto, Tailwind y CI con GitHub Actions.</p>
           <div class="project-links">
@@ -236,15 +215,14 @@ System.out.println("Mido " + altura + " metros");</code></pre>
         </div>
         <a class="panel panel--shot tilt" href="https://servitek.pages.dev" target="_blank" rel="noopener" aria-label="Abrir servitek.pages.dev">
           <span class="panel-bar"><span class="panel-url">servitek.pages.dev</span><span class="panel-path">next build → out/ → Cloudflare Pages</span></span>
-          <img src="assets/projects/servitek.jpg" alt="Portada de la web de Servitek: electromecánica industrial para plantas que no pueden parar" width="1200" height="750" loading="lazy">
+          <span class="shot-scan"><img src="assets/projects/servitek.jpg" alt="Portada de la web de Servitek: electromecánica industrial para plantas que no pueden parar" width="1200" height="750" loading="lazy"></span>
         </a>
       </article>
 
       <article class="wrap split project reveal">
         <div class="prose">
-          <p class="project-meta">TypeScript · Vercel</p>
           <h3 class="project-title">Solca Decoraciones</h3>
-          <p>Web para una empresa de decoraciones en Paraguay. Ya publicada y en línea.</p>
+          <p>Web para una empresa de decoraciones en Paraguay, hecha con React y TypeScript. Ya publicada y en línea.</p>
           <div class="project-links">
             <a class="btn btn-primary btn-sm" href="https://solca-decoraciones.vercel.app" target="_blank" rel="noopener">Sitio en vivo <svg class="ext" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 11 11 5M6.2 5H11v4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
             <a class="btn btn-ghost btn-sm" href="https://github.com/ivanvera7/Solca-decoraciones" target="_blank" rel="noopener">Ver repo</a>
@@ -252,7 +230,21 @@ System.out.println("Mido " + altura + " metros");</code></pre>
         </div>
         <a class="panel panel--shot tilt" href="https://solca-decoraciones.vercel.app" target="_blank" rel="noopener" aria-label="Abrir solca-decoraciones.vercel.app">
           <span class="panel-bar"><span class="panel-url">solca-decoraciones.vercel.app</span><span class="panel-path">deploy → vercel.app</span></span>
-          <img src="assets/projects/solca.jpg" alt="Portada de la web de Solca Decoraciones: diseñamos espacios que inspiran" width="1200" height="750" loading="lazy">
+          <span class="shot-scan"><img src="assets/projects/solca.jpg" alt="Portada de la web de Solca Decoraciones: diseñamos espacios que inspiran" width="1200" height="750" loading="lazy"></span>
+        </a>
+      </article>
+
+      <article class="wrap split project reveal">
+        <div class="prose">
+          <h3 class="project-title">Kit VibeCoding Pro</h3>
+          <p>Las herramientas, los prompts y el método para programar con agentes de IA en Claude Code, de la idea al proyecto verificado. Tres prompts para preparar el ordenador, empezar un proyecto o mejorar uno que ya existe. En español e inglés, con licencia MIT.</p>
+          <div class="project-links">
+            <a class="btn btn-primary btn-sm" href="https://github.com/ivanvera7/kit-vibecoding-pro" target="_blank" rel="noopener">Ver repo <svg class="ext" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 11 11 5M6.2 5H11v4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+        </div>
+        <a class="panel panel--shot tilt" href="https://github.com/ivanvera7/kit-vibecoding-pro" target="_blank" rel="noopener" aria-label="Abrir el repositorio kit-vibecoding-pro en GitHub">
+          <span class="panel-bar"><span class="panel-url">github.com/ivanvera7/kit-vibecoding-pro</span><span class="panel-path">prompts/ · docs/ · assets/</span></span>
+          <span class="shot-scan"><img src="assets/projects/kit-vibecoding-pro.jpg" alt="Portada del Kit VibeCoding Pro: programa con agentes de IA con método" width="1200" height="750" loading="lazy"></span>
         </a>
       </article>
 
@@ -470,6 +462,7 @@ public class Main {
           <h2 class="sec-title sec-title--xl reveal">¿Hablamos?</h2>
           <p class="sec-sub reveal">Escríbeme por cualquiera de estos canales.</p>
           <p class="status reveal"><span class="status-dot" aria-hidden="true"></span>Disponible para proyectos · Madrid, ES</p>
+          <div class="contact-holo" id="contactHolo"><canvas class="holo-gl holo-gl--contact" id="holoContact" aria-hidden="true"></canvas></div>
         </div>
 
         <ul class="contact-list reveal">

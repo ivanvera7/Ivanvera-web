@@ -2,9 +2,9 @@
 
 # Iván Vera — Web personal
 
-**Portafolio personal con la gramática de una documentación de referencia: prosa a la izquierda, código real a la derecha. Cero dependencias.**
+**Portafolio personal en negro y verde con un holograma 3D de partículas, programas Java que se ejecutan y código real. Cero dependencias.**
 
-[![Web en vivo](https://img.shields.io/badge/web-en%20línea-4cc38a?style=flat-square)](https://ivanvera7.github.io/Ivanvera-web/)
+[![Web en vivo](https://img.shields.io/badge/web-en%20línea-3dffa0?style=flat-square)](https://ivanvera7.github.io/Ivanvera-web/)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=fff)](https://developer.mozilla.org/es/docs/Web/HTML)
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=fff)](https://developer.mozilla.org/es/docs/Web/CSS)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=000)](https://developer.mozilla.org/es/docs/Web/JavaScript)
@@ -36,26 +36,27 @@ incrustado y vías de contacto directo.
 
 | Área | Detalle |
 | --- | --- |
-| **Diseño** | Fondo oscuro con un único acento verde. Tipografías autoalojadas: **Hubot Sans** (de GitHub) y **JetBrains Mono** (de IntelliJ). Sistema documentado en [`DESIGN.md`](DESIGN.md). |
+| **Diseño** | Fondo negro puro con acento verde. Hologramas 3D de partículas en el hero, en Contacto y en los logos del stack (WebGL propio, sin librerías). Código con colores de editor oscuro (One Dark). Tipografías autoalojadas: **Archivo** variable (titulares), **Hubot Sans** (texto) y **JetBrains Mono** (código). |
 | **Paneles de código** | Todo el código mostrado es real, sacado de mis repos, con resaltado de sintaxis propio y números de línea. |
 | **Interacción** | El programa de *Variables* del hero se ejecuta y muestra su salida; los 5 ejercicios de Java se exploran como pestañas; botones para copiar el email y los datos. |
-| **Proyectos** | Capturas reales de las dos webs publicadas (Servitek y Solca). |
-| **Responsive** | Un único módulo prosa \| panel que pasa a una columna en `900px`; menú desplegable en `760px`; ajustes finos en `560px`. |
+| **Proyectos** | Capturas reales de las dos webs publicadas (Servitek y Solca) y el banner del Kit VibeCoding Pro. |
+| **Responsive** | Un único módulo prosa \| panel que pasa a una columna en `900px`; menú a pantalla completa en `760px`; ajustes finos en `560px`. |
 | **Accesibilidad** | HTML semántico, contraste AA, *skip link*, foco visible, pestañas ARIA con teclado, menú móvil con Esc, contenido legible sin JavaScript y soporte de `prefers-reduced-motion`. |
 | **SEO / Social** | `title`, `meta description`, `theme-color`, Open Graph y Twitter Card, favicon + apple-touch-icon. |
 | **Rendimiento** | Imágenes optimizadas y con `loading="lazy"`, sin librerías externas, CSS y JS sin procesar. |
 
 ### Movimiento
 
-1. **Fondo de programación**: rejilla de puntos, fragmentos de mi código real cayendo en tres profundidades (canvas) y una luz verde que sigue al cursor.
-2. **Máquina de escribir** en el nombre y luz aurora suave en el hero.
+1. **Holograma 3D del hero**: unas 9.000 partículas forman «IV», «</>» o una esfera y cambian de forma solas, con un clic o con los botones. El ratón aparta las partículas e inclina el holograma; una banda de escaneo lo recorre.
+2. **Entrada y profundidad**: el nombre sube desde su máscara y se ensancha; al bajar, el texto del hero se aleja más rápido que el holograma.
 3. **Programas ejecutables**: el hero y los 5 ejercicios de Java escriben `java Main.java` y muestran su salida real; el de `Scanner` te pide el nombre y te saluda.
-4. Títulos que aparecen letra a letra y bloques que entran al hacer scroll.
+4. Títulos cuyas palabras suben y se ensanchan, paneles que entran inclinados en 3D y barra de navegación con píldora deslizante (menú a pantalla completa en móvil).
 5. Barras de nivel con contador, barra de progreso de lectura y subrayado del menú con *scrollspy*.
-6. Capturas de proyectos con inclinación 3D y reflejo que sigue al ratón.
+6. Capturas de proyectos y foto con inclinación 3D y reflejo que sigue al ratón.
+8. **Stack en holograma**: cada logo de herramienta es un holograma 3D de partículas con sus colores reales; al pasar el ratón gira y se abre.
 7. Microinteracciones: pulsación de botones, flechas externas, confirmación de «Copiado».
 
-> El fondo se pausa con la pestaña oculta y va a 30 fps en móvil. Con
+> El holograma se pausa fuera de pantalla o con la pestaña oculta y usa menos partículas en móvil. Con
 > «movimiento reducido» no hay desplazamientos: todo aparece ya completo.
 
 <div align="center">
@@ -77,8 +78,8 @@ Ivanvera-web/
 ├── DESIGN.md           # Sistema de diseño (tokens, tipografía, componentes)
 ├── assets/
 │   ├── avatar.jpg      # Foto de perfil (también usada como og:image)
-│   ├── fonts/          # Hubot Sans y JetBrains Mono (woff2 + licencias OFL)
-│   ├── projects/       # Capturas de Servitek y Solca
+│   ├── fonts/          # Archivo, Hubot Sans y JetBrains Mono (woff2 + licencias OFL)
+│   ├── projects/       # Capturas de Servitek y Solca, banner del Kit VibeCoding Pro
 │   └── logos/          # SVG de las herramientas del stack
 ├── favicon/
 │   ├── favicon.svg             # Icono de pestaña (vectorial)
@@ -102,7 +103,7 @@ Ivanvera-web/
 ### Iconos y favicon
 
 - **Logos del stack**: [Devicon](https://devicon.dev/), [Simple Icons](https://simpleicons.org/), [Lucide](https://lucide.dev/) y el SVG oficial de opencode — servidos como archivos locales en `assets/logos/` (la web no hace peticiones a CDNs en tiempo de ejecución).
-- **Favicon**: `>` y el bloque verde del logo sobre una pieza oscura, dibujado en SVG (`favicon/favicon.svg`) con la paleta de la web.
+- **Favicon**: «IV» en verde sobre una pieza negra, dibujado en SVG (`favicon/favicon.svg`).
 
 | Archivo | Uso | Tamaño |
 | --- | --- | --- |
@@ -159,6 +160,7 @@ GitHub Pages reconstruye el sitio automáticamente (1–2 minutos).
 | 05 | Info de usuario | Java | [repo](https://github.com/ivanvera7/Ejercicio5-Info-de-usuario) | — |
 | 06 | Servitek-web | Next.js · TypeScript · Tailwind | [repo](https://github.com/ivanvera7/servitek-web) | [servitek.pages.dev](https://servitek.pages.dev) |
 | 07 | Solca Decoraciones | React · TypeScript | [repo](https://github.com/ivanvera7/Solca-decoraciones) | [solca-decoraciones.vercel.app](https://solca-decoraciones.vercel.app) |
+| 08 | Kit VibeCoding Pro | Prompts y método para Claude Code | [repo](https://github.com/ivanvera7/kit-vibecoding-pro) | — |
 
 ## ✏️ Personalización
 

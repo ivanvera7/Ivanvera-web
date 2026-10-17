@@ -165,48 +165,315 @@
     return { run, scope };
   };
 
-  const heroRunner = makeRunner($('.panel--hero'));
   const exRunners = new Map($$('.ex-panel').map(p => [p.id, makeRunner(p)]));
 
   /* ----------------------------------------------------------
-     3. Hero: máquina de escribir en el nombre → entrada del resto
-        → el programa se ejecuta
+     3. Hero: holograma 3D de partículas (WebGL puro, sin librerías).
+        Miles de partículas forman "IV", "</>" o una esfera; el ratón
+        las aparta e inclina el holograma, y un clic cambia la forma.
   ---------------------------------------------------------- */
   const hero = $('.hero');
-  const nameEl = $('.hero-name');
-  const typedName = $('#typed');
+  const holoCanvas = $('#holoGL');
+  const chips = $$('.holo-chip');
   $$('[data-enter]').forEach((el, i) => el.style.setProperty('--i', i));
 
-  const startHeroRun = () => {
-    if (!heroRunner || reduce) return;
-    const rio = new IntersectionObserver((entries, obs) => {
-      if (!entries.some(e => e.isIntersecting)) return;
-      obs.disconnect();
-      setTimeout(() => heroRunner.run(), 500);
-    }, { threshold: 0.4 });
-    rio.observe($('.console-out', heroRunner.scope));
+  const fontsReady = () => Promise.race([
+    document.fonts ? document.fonts.ready : Promise.resolve(),
+    wait(1500),
+  ]);
+
+  /* PRNG con semilla: las formas salen iguales en cada visita */
+  const mulberry = seed => () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 
-  if (reduce || !typedName) {
-    hero && hero.classList.add('is-loaded');
-  } else {
-    const NAME = typedName.textContent;
-    typedName.textContent = '';
-    nameEl.classList.add('is-typing');
-    let i = 0;
-    const tick = () => {
-      typedName.textContent = NAME.slice(0, ++i);
-      if (i < NAME.length) return setTimeout(tick, 70 + Math.random() * 70);
-      nameEl.classList.remove('is-typing');
-      nameEl.classList.add('is-typed');
-      hero.classList.add('is-loaded');
-      startHeroRun();
+  const VERT = `
+    attribute vec3 aA; attribute vec3 aB; attribute float aSeed;
+    uniform float uT, uMorph, uScale, uAspect, uPx, uMouseOn, uFade;
+    uniform vec2 uRot, uMouse, uOffset;
+    varying float vA; varying float vHot;
+    mat3 rotY(float a){ float c = cos(a), s = sin(a); return mat3(c,0.,-s, 0.,1.,0., s,0.,c); }
+    mat3 rotX(float a){ float c = cos(a), s = sin(a); return mat3(1.,0.,0., 0.,c,s, 0.,-s,c); }
+    void main(){
+      /* cada partícula viaja con su propio retraso: el cambio de forma fluye */
+      float d = clamp((uMorph - aSeed * 0.4) / 0.6, 0., 1.);
+      float e = d < .5 ? 4. * d * d * d : 1. - pow(-2. * d + 2., 3.) / 2.;
+      vec3 p = mix(aA, aB, e);
+      p += normalize(p + 0.0001) * sin(e * 3.14159) * (0.18 + aSeed * 0.45);
+      p += 0.014 * vec3(sin(uT * 1.3 + aSeed * 40.), cos(uT * 1.1 + aSeed * 31.), sin(uT * .9 + aSeed * 23.));
+      p = rotX(uRot.x) * rotY(uRot.y) * p;
+      p *= uScale;
+      float persp = 2.6 / (3.2 - p.z);
+      vec2 sp = p.xy * persp;
+      sp.x /= uAspect;
+      sp += uOffset;
+      /* el ratón empuja las partículas cercanas (en espacio de pantalla) */
+      vec2 dm = sp - uMouse; dm.x *= uAspect;
+      float dist = length(dm);
+      float f = uMouseOn * smoothstep(0.38, 0.0, dist);
+      sp += normalize(dm + 0.0001) * f * 0.14 * vec2(1. / uAspect, 1.);
+      gl_Position = vec4(sp, 0., 1.);
+      gl_PointSize = (1.1 + aSeed * 1.7 + f * 2.2) * persp * uPx;
+      /* banda de escaneo que recorre el holograma */
+      float scan = smoothstep(0.05, 0.0, abs(fract(p.y * 0.42 - uT * 0.16) - 0.5));
+      vA = (0.3 + 0.7 * clamp(persp - 0.55, 0., 1.)) * uFade;
+      vHot = scan * 0.85 + f;
+    }`;
+  const FRAG = `
+    precision mediump float;
+    varying float vA; varying float vHot;
+    uniform vec3 uColor, uHot;
+    void main(){
+      vec2 c = gl_PointCoord - 0.5;
+      float a = smoothstep(0.5, 0.0, length(c)) * vA;
+      vec3 col = mix(uColor, uHot, clamp(vHot, 0., 1.));
+      gl_FragColor = vec4(col * a, a);
+    }`;
+
+  const makeHologram = (canvas, host, opts) => {
+    if (!canvas || !host) return null;
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: true, premultipliedAlpha: true });
+    if (!gl) return null;
+
+    const N = Math.round((innerWidth < 700 ? 4200 : innerWidth < 1200 ? 7000 : 9000) * (opts.density || 1));
+    const RING = Math.floor(N * 0.08);           /* anillo base común a todas las formas */
+    const rnd = mulberry(opts.seed || 7);
+
+    const ringPoint = (out, i) => {
+      const a = rnd() * Math.PI * 2, r = 0.92 + (rnd() - 0.5) * 0.05;
+      out[i * 3] = Math.cos(a) * r; out[i * 3 + 1] = -1.18 + (rnd() - 0.5) * 0.02; out[i * 3 + 2] = Math.sin(a) * r;
     };
-    setTimeout(tick, 350);
+    const fromText = (txt, weight) => {
+      const W = 512, H = 256;
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      if ('fontStretch' in x) x.fontStretch = 'expanded';
+      x.font = `${weight} 200px Archivo, sans-serif`;
+      x.fillText(txt, W / 2, H / 2 + 10);
+      const d = x.getImageData(0, 0, W, H).data, pts = [];
+      for (let y = 0; y < H; y += 2) for (let xx = 0; xx < W; xx += 2) if (d[(y * W + xx) * 4 + 3] > 128) pts.push(xx, y);
+      const out = new Float32Array(N * 3), n = pts.length / 2;
+      for (let i = 0; i < N; i++) {
+        if (i >= N - RING || !n) { ringPoint(out, i); continue; }
+        const k = Math.floor(rnd() * n) * 2;
+        out[i * 3] = (pts[k] - W / 2) / (H / 2) * 0.95 + (rnd() - 0.5) * 0.01;
+        out[i * 3 + 1] = -(pts[k + 1] - H / 2) / (H / 2) * 0.95;
+        out[i * 3 + 2] = (rnd() - 0.5) * 0.36;      /* volumen: letras extruidas */
+      }
+      return out;
+    };
+    const sphere = () => {
+      const out = new Float32Array(N * 3), M = N - RING, g = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < N; i++) {
+        if (i >= M) { ringPoint(out, i); continue; }
+        const y = 1 - (i / (M - 1)) * 2, r = Math.sqrt(1 - y * y), th = g * i;
+        const R = 1.1 + (rnd() < 0.12 ? rnd() * 0.12 : 0);
+        out[i * 3] = Math.cos(th) * r * R; out[i * 3 + 1] = y * R; out[i * 3 + 2] = Math.sin(th) * r * R;
+      }
+      return out;
+    };
+
+    const shader = (type, src) => {
+      const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+      return s;
+    };
+    let prog;
+    try {
+      prog = gl.createProgram();
+      gl.attachShader(prog, shader(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    } catch (err) { return null; }
+    gl.useProgram(prog);
+
+    const U = {};
+    ['uT', 'uMorph', 'uScale', 'uAspect', 'uPx', 'uMouseOn', 'uFade', 'uRot', 'uMouse', 'uOffset', 'uColor', 'uHot']
+      .forEach(n => { U[n] = gl.getUniformLocation(prog, n); });
+    gl.uniform3f(U.uColor, 0.16, 0.95, 0.58);
+    gl.uniform3f(U.uHot, 0.85, 1.0, 0.92);
+
+    const buf = (name, data, size) => {
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+      const loc = gl.getAttribLocation(prog, name);
+      gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+      return b;
+    };
+    const seeds = new Float32Array(N); for (let i = 0; i < N; i++) seeds[i] = rnd();
+    let shapes = null, bufA, bufB;
+    buf('aSeed', seeds, 1);
+
+    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);                /* luz aditiva: donde se juntan, brillan más */
+
+    /* estado */
+    let cur = 0, next = 0, morph = 0, morphing = false, pending = null, lastSwitch = 0;
+    let W = 0, H = 0, aspect = 1, dpr = 1, raf = null, visible = true, t0 = performance.now();
+    const m = { x: 0, y: 0, tx: 0, ty: 0, on: 0, ton: 0 };
+    let yaw = 0, pitch = 0, scrollFade = 1;
+
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, fine ? 2 : 1.5);
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      aspect = W / Math.max(H, 1);
+      const L = opts.layout(W, aspect);
+      gl.uniform1f(U.uAspect, aspect);
+      gl.uniform1f(U.uScale, L.scale);
+      gl.uniform1f(U.uPx, dpr * L.px);
+      gl.uniform2f(U.uOffset, L.ox, L.oy);
+    };
+
+    const chips = opts.chips || [];
+    const setChips = i => chips.forEach(c => c.setAttribute('aria-pressed', String(+c.dataset.shape === i)));
+    const go = i => {
+      if (!shapes) return;
+      i = ((i % shapes.length) + shapes.length) % shapes.length;
+      if (morphing) { pending = i; setChips(i); return; }
+      if (i === cur) return;
+      next = i; setChips(i);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferSubData(gl.ARRAY_BUFFER, 0, shapes[next]);
+      lastSwitch = performance.now();
+      if (reduce) { finish(); draw(performance.now()); return; }
+      morph = 0; morphing = true;
+    };
+    const finish = () => {
+      cur = next; morph = 0; morphing = false;
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufA); gl.bufferSubData(gl.ARRAY_BUFFER, 0, shapes[cur]);
+      if (pending !== null && pending !== cur) { const p = pending; pending = null; go(p); }
+      else pending = null;
+    };
+
+    const draw = now => {
+      const t = (now - t0) / 1000;
+      /* el ratón se suaviza con inercia */
+      m.x += (m.tx - m.x) * 0.12; m.y += (m.ty - m.y) * 0.12; m.on += (m.ton - m.on) * 0.08;
+      /* balanceo en vez de giro completo: las letras se leen siempre */
+      const autoYaw = reduce ? 0.35 : Math.sin(t * 0.35) * 0.6;
+      yaw += ((autoYaw + m.x * 0.6 * m.on) - yaw) * 0.08;
+      pitch += ((-m.y * 0.35 * m.on + (reduce ? 0.12 : Math.sin(t * 0.4) * 0.08)) - pitch) * 0.08;
+      if (morphing) {
+        morph = Math.min(1, morph + 1 / (1.7 * 60));
+        if (morph >= 1) finish();
+      }
+      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform1f(U.uT, reduce ? 0 : t);
+      gl.uniform1f(U.uMorph, morphing ? morph : 0);
+      gl.uniform2f(U.uRot, pitch, yaw);
+      gl.uniform2f(U.uMouse, m.x, m.y);
+      gl.uniform1f(U.uMouseOn, m.on);
+      gl.uniform1f(U.uFade, scrollFade * (0.94 + (reduce ? 0.06 : 0.06 * Math.sin(t * 23) * Math.sin(t * 7))));
+      gl.drawArrays(gl.POINTS, 0, N);
+    };
+    const loop = now => {
+      raf = requestAnimationFrame(loop);
+      /* cambio automático de forma si nadie interactúa */
+      if (!morphing && !reduce && now - lastSwitch > 7000) go(cur + 1);
+      draw(now);
+    };
+    const start = () => { if (!raf && visible && !document.hidden && !reduce && shapes) { raf = requestAnimationFrame(loop); } };
+    const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; };
+
+    /* ratón y toque */
+    const toNdc = e => {
+      const r = canvas.getBoundingClientRect();
+      return [((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1)];
+    };
+    host.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      [m.tx, m.ty] = toNdc(e); m.ton = 1;
+    });
+    host.addEventListener('pointerleave', () => { m.ton = 0; });
+    canvas.addEventListener('pointerdown', e => {
+      [m.tx, m.ty] = toNdc(e);
+      if (e.pointerType !== 'mouse') { m.x = m.tx; m.y = m.ty; m.on = 1; m.ton = 0; }   /* el toque sacude y se calma */
+      go(cur === next || !morphing ? cur + 1 : next + 1);
+    });
+    chips.forEach(c => c.addEventListener('click', () => go(+c.dataset.shape)));
+
+    /* el holograma principal se desvanece al bajar */
+    if (opts.scrollFade) window.addEventListener('scroll', () => {
+      scrollFade = Math.max(0, 1 - window.scrollY / (innerHeight * 0.9));
+      if (reduce && shapes) draw(performance.now());
+    }, { passive: true });
+
+    new IntersectionObserver(entries => {
+      visible = entries.some(e => e.isIntersecting);
+      visible ? start() : stop();
+    }).observe(host);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+    let rt;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); if (reduce && shapes) draw(performance.now()); }, 150); });
+
+    return {
+      begin() {
+        shapes = [fromText('IV', 800), fromText('</>', 700), sphere()];
+        cur = next = opts.start || 0;
+        bufA = buf('aA', shapes[cur], 3);
+        bufB = buf('aB', shapes[cur], 3);
+        setChips(cur);
+        resize();
+        lastSwitch = performance.now();
+        host.classList.add('has-holo');
+        if (reduce) draw(performance.now()); else start();
+      },
+    };
+  };
+
+  /* hero: a la derecha del nombre en escritorio; en móvil, arriba, sobre el título */
+  const hologram = makeHologram(holoCanvas, hero, {
+    chips, scrollFade: true,
+    layout: (W, aspect) => {
+      const wide = W > 900;
+      hero.style.setProperty('--hx', wide ? '68%' : '50%');
+      return { scale: Math.min(wide ? 0.74 : 0.6, 0.62 * aspect), px: wide ? 1.15 : 1, ox: wide ? 0.38 : 0, oy: wide ? 0.1 : 0.5 };
+    },
+  });
+  /* contacto: un segundo holograma más pequeño, empieza como esfera */
+  const contactHolo = makeHologram($('#holoContact'), $('#contactHolo'), {
+    density: 0.45, seed: 11, start: 2,
+    layout: (W, aspect) => ({ scale: Math.min(0.68, 0.62 * aspect), px: 1, ox: 0, oy: 0.12 }),
+  });
+
+  if (!hologram) {
+    holoCanvas && holoCanvas.remove();
+    const ui = $('.holo-ui'); ui && ui.remove();
+  }
+  if (!contactHolo) { const c = $('#contactHolo'); c && c.remove(); }
+
+  /* secuencia: fuentes listas → el nombre entra → el holograma se forma */
+  fontsReady().then(() => {
+    hero && hero.classList.add('is-loaded');
+    hologram && hologram.begin();
+    contactHolo && contactHolo.begin();
+  });
+
+  /* profundidad al hacer scroll: el texto del hero sube más rápido que el holograma */
+  const heroCopy = $('.hero-grid');
+  if (heroCopy && !reduce) {
+    let tick = false;
+    window.addEventListener('scroll', () => {
+      if (tick) return; tick = true;
+      requestAnimationFrame(() => {
+        const y = Math.min(window.scrollY, innerHeight);
+        heroCopy.style.transform = `translate3d(0, ${(-y * 0.18).toFixed(1)}px, 0)`;
+        heroCopy.style.opacity = String(Math.max(0, 1 - y / (innerHeight * 0.75)));
+        tick = false;
+      });
+    }, { passive: true });
   }
 
   /* ----------------------------------------------------------
-     4. Títulos de sección: letra a letra con desenfoque
+     4. Títulos de sección: cada palabra sube desde su máscara
+        y se ensancha (eje de anchura de Archivo)
   ---------------------------------------------------------- */
   if (!reduce) {
     $$('.sec-title').forEach(h => {
@@ -222,13 +489,11 @@
               const word = document.createElement('span');
               word.className = 'word';
               word.setAttribute('aria-hidden', 'true');
-              for (const ch of part) {
-                const s = document.createElement('span');
-                s.className = 'ch';
-                s.style.setProperty('--c', c++);
-                s.textContent = ch;
-                word.append(s);
-              }
+              const inner = document.createElement('span');
+              inner.className = 'wi';
+              inner.style.setProperty('--c', c++);
+              inner.textContent = part;
+              word.append(inner);
               frag.append(word);
             });
             child.replaceWith(frag);
@@ -291,6 +556,189 @@
       grow();
     }, { threshold: 0.35 }).observe(skills);
   }
+
+  /* ----------------------------------------------------------
+     6b. Stack: cada logo es un holograma 3D de partículas con sus
+         colores reales (sacados de los píxeles del propio SVG).
+         Un solo lienzo WebGL para los nueve; al pasar el ratón, el
+         logo gira y se abre, y las partículas se apartan del cursor.
+  ---------------------------------------------------------- */
+  const toolsStage = $('#toolsStage');
+  const toolsCanvas = $('#toolsGL');
+  (() => {
+    if (!toolsStage || !toolsCanvas) return;
+    const gl = toolsCanvas.getContext('webgl', { antialias: false, alpha: true, premultipliedAlpha: true });
+    if (!gl) return;
+    const items = $$('.tools li', toolsStage);
+    const COUNT = items.length;
+    const K = innerWidth < 700 ? 520 : 1000;            /* partículas por logo */
+
+    const VS = `
+      attribute vec3 aPos; attribute vec2 aCenter; attribute vec3 aColor; attribute float aSeed; attribute float aIdx;
+      uniform float uT, uR, uPx, uMouseOn;
+      uniform vec2 uRes, uMouse;
+      uniform float uHover[${COUNT}], uSpin[${COUNT}];
+      varying vec3 vCol; varying float vA;
+      void main(){
+        int i = int(aIdx + 0.5);
+        float h = uHover[i];
+        vec3 p = aPos;
+        p += 0.025 * vec3(sin(uT * 1.7 + aSeed * 40.), cos(uT * 1.3 + aSeed * 30.), sin(uT + aSeed * 20.));
+        p *= 1. + h * 0.3 * (aSeed - 0.35);           /* al pasar el ratón el logo "respira" hacia fuera */
+        float a = sin(uT * 0.7 + aIdx * 0.9) * 0.45 + uSpin[i];
+        float c = cos(a), s = sin(a);
+        p = vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z);
+        float persp = 2.2 / (3.0 - p.z);
+        vec2 px = aCenter + p.xy * persp * uR;
+        vec2 d = px - uMouse;
+        float f = uMouseOn * smoothstep(uR * 1.4, 0., length(d));
+        px += normalize(d + 0.001) * f * uR * 0.4;
+        gl_Position = vec4(px / uRes * 2. - 1., 0., 1.);
+        gl_PointSize = (1.5 + aSeed * 1.5) * persp * uPx * (1. + h * 0.35);
+        float scan = smoothstep(0.08, 0., abs(fract(p.y * 0.5 - uT * 0.25) - 0.5));
+        vCol = aColor * (1.1 + 0.45 * h + 0.5 * scan);
+        vA = 0.75 + 0.25 * clamp(persp - 0.6, 0., 1.);
+      }`;
+    const FS = `
+      precision mediump float;
+      varying vec3 vCol; varying float vA;
+      void main(){
+        float a = smoothstep(0.5, 0.0, length(gl_PointCoord - 0.5)) * vA;
+        gl_FragColor = vec4(vCol * a, a);
+      }`;
+    const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return gl.getShaderParameter(o, gl.COMPILE_STATUS) ? o : null; };
+    const vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
+    if (!vs || !fs) return;
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+    const U = n => gl.getUniformLocation(prog, n);
+    const uT = U('uT'), uR = U('uR'), uPx = U('uPx'), uMouseOn = U('uMouseOn'), uRes = U('uRes'), uMouse = U('uMouse'), uHover = U('uHover'), uSpin = U('uSpin');
+
+    /* muestrea un logo: píxeles opacos y no demasiado oscuros, con su color */
+    const SZ = 96;
+    const sample = async imgs => {
+      const c = document.createElement('canvas'); c.width = SZ * imgs.length; c.height = SZ;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      await Promise.all(imgs.map((src, k) => new Promise(res => {
+        const im = new Image();
+        im.onload = () => { x.drawImage(im, k * SZ + 4, 4, SZ - 8, SZ - 8); res(); };
+        im.onerror = res;
+        im.src = src;
+      })));
+      const d = x.getImageData(0, 0, c.width, c.height).data, pts = [];
+      for (let y = 0; y < SZ; y += 1) for (let xx = 0; xx < c.width; xx += 1) {
+        const o = (y * c.width + xx) * 4;
+        if (d[o + 3] < 150) continue;
+        const r = d[o] / 255, g = d[o + 1] / 255, b = d[o + 2] / 255;
+        if (0.2126 * r + 0.7152 * g + 0.0722 * b < 0.12) continue;
+        pts.push([xx, y, r, g, b]);
+      }
+      return { pts, w: c.width };
+    };
+
+    const rnd = mulberry(23);
+    const N = K * COUNT;
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), seed = new Float32Array(N), idx = new Float32Array(N), ctr = new Float32Array(N * 2);
+    const build = async () => {
+      for (let i = 0; i < COUNT; i++) {
+        const srcs = $$('img', items[i]).map(im => im.getAttribute('src'));
+        const { pts, w } = await sample(srcs);
+        const half = Math.max(w, SZ) / 2;
+        for (let k = 0; k < K; k++) {
+          const n = i * K + k;
+          const p = pts.length ? pts[Math.floor(rnd() * pts.length)] : [w / 2, SZ / 2, .8, .8, .8];
+          pos[n * 3] = (p[0] - w / 2) / half;
+          pos[n * 3 + 1] = -(p[1] - SZ / 2) / half;
+          pos[n * 3 + 2] = (rnd() - 0.5) * 0.3;           /* volumen */
+          col[n * 3] = p[2]; col[n * 3 + 1] = p[3]; col[n * 3 + 2] = p[4];
+          seed[n] = rnd(); idx[n] = i;
+        }
+      }
+    };
+    const attr = (name, data, size, usage = gl.STATIC_DRAW) => {
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+      const l = gl.getAttribLocation(prog, name);
+      gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, 0, 0);
+      return b;
+    };
+
+    gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    let ctrBuf, W = 0, H = 0, dpr = 1, raf = null, visible = false, t0 = performance.now(), last = 0;
+    const hover = new Float32Array(COUNT), target = new Float32Array(COUNT), spin = new Float32Array(COUNT);
+    const mouse = { x: -9999, y: -9999, on: 0, ton: 0 };
+
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, fine ? 2 : 1.5);
+      W = toolsCanvas.clientWidth; H = toolsCanvas.clientHeight;
+      toolsCanvas.width = Math.round(W * dpr); toolsCanvas.height = Math.round(H * dpr);
+      gl.viewport(0, 0, toolsCanvas.width, toolsCanvas.height);
+      gl.uniform2f(uRes, W, H);
+      gl.uniform1f(uPx, dpr);
+    };
+    /* el centro de cada logo se lee del sitio que ocupa su <img> (sigue al reveal y al hover) */
+    const place = () => {
+      const base = toolsCanvas.getBoundingClientRect();
+      let r0 = 26;
+      for (let i = 0; i < COUNT; i++) {
+        const box = ($('.tool-pair', items[i]) || $('img', items[i])).getBoundingClientRect();
+        const cx = box.left + box.width / 2 - base.left, cy = H - (box.top + box.height / 2 - base.top);
+        r0 = Math.min(box.height, 80) / 2;
+        for (let k = 0; k < K; k++) { const n = (i * K + k) * 2; ctr[n] = cx; ctr[n + 1] = cy; }
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, ctrBuf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, ctr);
+      gl.uniform1f(uR, r0 * 1.1);
+    };
+
+    const draw = now => {
+      const t = (now - t0) / 1000, dt = Math.min((now - (last || now)) / 1000, 0.1);
+      last = now;
+      for (let i = 0; i < COUNT; i++) {
+        hover[i] += (target[i] - hover[i]) * 0.12;
+        spin[i] += dt * hover[i] * 4;                      /* gira mientras el ratón está encima */
+      }
+      mouse.on += (mouse.ton - mouse.on) * 0.15;
+      place();
+      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform1f(uT, reduce ? 0 : t);
+      gl.uniform1fv(uHover, hover); gl.uniform1fv(uSpin, spin);
+      gl.uniform2f(uMouse, mouse.x, mouse.y);
+      gl.uniform1f(uMouseOn, mouse.on);
+      gl.drawArrays(gl.POINTS, 0, N);
+    };
+    const loop = now => { raf = requestAnimationFrame(loop); draw(now); };
+    const start = () => { if (!raf && visible && !document.hidden && !reduce && ctrBuf) raf = requestAnimationFrame(loop); };
+    const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; };
+
+    items.forEach((li, i) => {
+      li.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') target[i] = 1; });
+      li.addEventListener('pointerleave', () => { target[i] = 0; });
+      /* en táctil, un toque hace girar el logo un momento */
+      li.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') { target[i] = 1; setTimeout(() => { target[i] = 0; }, 700); } });
+    });
+    toolsStage.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      const r = toolsCanvas.getBoundingClientRect();
+      mouse.x = e.clientX - r.left; mouse.y = H - (e.clientY - r.top); mouse.ton = 1;
+    });
+    toolsStage.addEventListener('pointerleave', () => { mouse.ton = 0; });
+
+    new IntersectionObserver(es => { visible = es.some(e => e.isIntersecting); visible ? start() : stop(); }, { rootMargin: '100px 0px' }).observe(toolsStage);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+    let rt;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); if (reduce && ctrBuf) draw(performance.now()); }, 150); });
+
+    build().then(() => {
+      attr('aPos', pos, 3); attr('aColor', col, 3); attr('aSeed', seed, 1); attr('aIdx', idx, 1);
+      ctrBuf = attr('aCenter', ctr, 2, gl.DYNAMIC_DRAW);
+      toolsStage.classList.add('has-holo');
+      resize();
+      if (reduce) requestAnimationFrame(() => draw(performance.now()));
+      else start();
+    });
+  })();
 
   /* ----------------------------------------------------------
      7. Pestañas de ejercicios (patrón ARIA tabs, con flechas).
@@ -400,7 +848,8 @@
 
   const moveLine = link => {
     if (!line || !link || mobile()) return;
-    line.style.transform = `translateX(${link.offsetLeft}px) scaleX(${link.offsetWidth / 100})`;
+    line.style.setProperty('--lx', link.offsetLeft + 'px');
+    line.style.setProperty('--ls', String(link.offsetWidth / 100));
     line.classList.add('on');
   };
 
@@ -418,12 +867,19 @@
     .map(a => ({ link: a, el: $(a.getAttribute('href')) }))
     .filter(s => s.el);
 
-  let ticking = false;
+  let ticking = false, lastY = window.scrollY;
+  links.forEach((a, k) => a.style.setProperty('--k', k));
   const onScroll = () => {
     const y = window.scrollY;
     const max = document.documentElement.scrollHeight - window.innerHeight;
     if (progress) progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
-    if (topbar) topbar.classList.toggle('stuck', y > 16);
+    /* la barra se esconde al bajar y vuelve al subir */
+    if (topbar) {
+      const down = y > lastY + 2, up = y < lastY - 2;
+      if (down && y > innerHeight * 0.5 && !(menu && menu.classList.contains('open'))) topbar.classList.add('is-away');
+      if (up || y < 80) topbar.classList.remove('is-away');
+      lastY = y;
+    }
     const probe = y + window.innerHeight * 0.35;
     let current = sections[0];
     for (const s of sections) if (s.el.offsetTop <= probe) current = s;
@@ -455,123 +911,13 @@
     });
   }
 
-  /* ----------------------------------------------------------
-     10. Fondo: código real cayendo en tres profundidades
-  ---------------------------------------------------------- */
-  const canvas = $('#bgCode');
-  if (canvas && canvas.getContext) {
-    const ctx = canvas.getContext('2d');
-    const FRAGMENTS = [
-      'System.out.println("Hola , Me llamo Ivan");', 'String nombre = "Ivan";',
-      'String ciudad = "Madrid";', 'int edad = 27;', 'double altura = 1.79;',
-      'int resultado = numero1 + numero2;', 'int division = numero1 / numero2;',
-      'Scanner scanner = new Scanner(System.in);', 'String nombre = scanner.nextLine();',
-      'import java.util.Scanner;', 'public static void main(String[] args) {',
-      'scanner.close();', 'SELECT * FROM', 'git commit -m', 'next build → out/',
-      'deploy → vercel.app', '// Variables', '// Mostrar en pantalla',
-    ];
-    const COLORS = ['164,172,182', '164,172,182', '164,172,182', '76,195,138', '232,192,125', '140,192,240'];
-    const LAYERS = [
-      { size: 11, alpha: 0.08, speed: [7, 11] },
-      { size: 13, alpha: 0.12, speed: [11, 17] },
-      { size: 15, alpha: 0.17, speed: [17, 26] },
-    ];
-    const coarse = !fine;
-    const dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
-    let W = 0, H = 0, drops = [];
-    const rand = (a, b) => a + Math.random() * (b - a);
-    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-
-    const spawn = (d, anywhere) => {
-      const L = LAYERS[d.layer];
-      d.text = pick(FRAGMENTS);
-      d.color = pick(COLORS);
-      d.speed = rand(L.speed[0], L.speed[1]);
-      d.x = rand(-40, W - 60);
-      d.y = anywhere ? rand(-40, H) : rand(-120, -20);
-      return d;
-    };
-
-    const resize = () => {
-      W = window.innerWidth; H = window.innerHeight;
-      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = W < 700 ? 12 : W < 1200 ? 20 : 26;
-      drops = Array.from({ length: n }, (_, i) => spawn({ layer: i % 3 }, true))
-        .sort((a, b) => a.layer - b.layer);
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      let layer = -1;
-      for (const d of drops) {
-        if (d.layer !== layer) {
-          layer = d.layer;
-          ctx.font = `${LAYERS[layer].size}px "JetBrains Mono", ui-monospace, monospace`;
-        }
-        /* aparece arriba y se desvanece en el último 25 % de la pantalla */
-        const fadeIn = Math.min(1, (d.y + 20) / 120);
-        const fadeOut = Math.min(1, (H - d.y) / (H * 0.25));
-        const a = LAYERS[layer].alpha * Math.max(0, Math.min(fadeIn, fadeOut));
-        if (a <= 0) continue;
-        ctx.fillStyle = `rgba(${d.color},${a.toFixed(3)})`;
-        ctx.fillText(d.text, d.x, d.y);
-      }
-    };
-
-    let last = 0, raf = null, acc = 0;
-    const FRAME = coarse ? 1000 / 30 : 0;   /* táctil: 30 fps para no calentar el móvil */
-    const loop = now => {
-      raf = requestAnimationFrame(loop);
-      const dt = Math.min(now - (last || now), 100);
-      last = now;
-      acc += dt;
-      if (acc < FRAME) return;
-      const step = acc / 1000;
-      acc = 0;
-      for (const d of drops) {
-        d.y += d.speed * step;
-        if (d.y > H + 20) spawn(d, false);
-      }
-      draw();
-    };
-
-    const start = () => { if (!raf && !reduce) { last = 0; raf = requestAnimationFrame(loop); } };
-    const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; };
-
-    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
-      resize();
-      draw();
-      start();
-    });
-    let rt;
-    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); draw(); }, 150); });
-    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
-  }
-
-  /* luz verde sobre la rejilla, siguiendo al cursor (con inercia) */
-  const glow = $('#bgGlow');
-  if (fine && glow) {
-    let sx = innerWidth / 2, sy = innerHeight * 0.4, tx = sx, ty = sy, graf = null;
-    const follow = () => {
-      sx += (tx - sx) * 0.14;
-      sy += (ty - sy) * 0.14;
-      glow.style.setProperty('--mx', sx.toFixed(1) + 'px');
-      glow.style.setProperty('--my', sy.toFixed(1) + 'px');
-      graf = Math.abs(tx - sx) + Math.abs(ty - sy) > 0.5 ? requestAnimationFrame(follow) : null;
-    };
-    window.addEventListener('pointermove', e => {
-      tx = e.clientX; ty = e.clientY;
-      if (!graf) graf = requestAnimationFrame(follow);
-    }, { passive: true });
-  }
-
-  /* la aurora del hero se pausa cuando no está en pantalla */
-  const heroLight = $('.hero-light');
-  if (heroLight) {
-    new IntersectionObserver(entries => {
-      entries.forEach(e => heroLight.classList.toggle('paused', !e.isIntersecting));
-    }).observe(hero);
+  /* los botones se rellenan desde el punto por donde entra el ratón */
+  if (fine) {
+    $$('.btn').forEach(btn => btn.addEventListener('pointerenter', e => {
+      const r = btn.getBoundingClientRect();
+      btn.style.setProperty('--fx', (e.clientX - r.left) + 'px');
+      btn.style.setProperty('--fy', (e.clientY - r.top) + 'px');
+    }));
   }
 
   /* ----------------------------------------------------------
