@@ -2,7 +2,7 @@
 
 # Iván Vera — Web personal
 
-**Portafolio personal en negro y verde con un holograma 3D de partículas, programas Java que se ejecutan y código real. Cero dependencias.**
+**Portafolio personal en negro y verde con hologramas 3D de partículas hechos en WebGL, programas Java que se ejecutan y código real. Cero dependencias.**
 
 [![Web en vivo](https://img.shields.io/badge/web-en%20línea-3dffa0?style=flat-square)](https://ivanvera7.github.io/Ivanvera-web/)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=fff)](https://developer.mozilla.org/es/docs/Web/HTML)
@@ -15,7 +15,7 @@
 
 **[Web en vivo](https://ivanvera7.github.io/Ivanvera-web/)** · **[LinkedIn](https://www.linkedin.com/in/ivanvera7/)** · **[Instagram](https://www.instagram.com/ivanvera7_/)** · **[GitHub](https://github.com/ivanvera7)** · **[Email](mailto:ivan99vera1@gmail.com)**
 
-<img src="docs/preview.jpg" alt="Vista previa de la web personal de Iván Vera" width="900">
+<img src="docs/preview.jpg" alt="Hero de la web: el nombre Ivan Vera a la izquierda y un holograma 3D de partículas verdes con las iniciales IV a la derecha" width="900">
 
 </div>
 
@@ -32,38 +32,61 @@ incrustado y vías de contacto directo.
 - **Autocontenido**: la única llamada externa son los *embeds* oficiales de Instagram.
 - **Publicado en GitHub Pages**: cada `push` a `main` vuelve a desplegarse solo.
 
+## 🎨 Identidad visual
+
+Negro puro, un único acento verde fósforo y luz en movimiento: hologramas 3D de
+partículas que reaccionan al ratón. Todo lo demás es sobrio para que se lea bien.
+El sistema completo está en [`DESIGN.md`](DESIGN.md).
+
+| Elemento | Valor |
+| --- | --- |
+| **Fondo** | `#000000`, negro puro, sin degradados ni texturas |
+| **Acento** | Verde fósforo `#3dffa0` (texto encima `#02170c`): botones, menú activo, barras de nivel, marca «IV» y hologramas |
+| **Texto** | `#ededef` · `#a9a9b0` · `#86868e` (contraste AA sobre negro y paneles) |
+| **Paneles** | Grises neutros de editor: `#111215`, `#17181c`, `#1f2125` |
+| **Código** | Tema oscuro One Dark: palabras clave `#c678dd`, tipos `#e5c07b`, cadenas `#98c379`, números `#d19a66`, comentarios `#7f848e` |
+| **Tipografía** | **Archivo** variable (titulares; el eje de anchura se anima), **Hubot Sans** (texto) y **JetBrains Mono** (solo código). Todas autoalojadas, licencia OFL |
+| **Formas** | Píldoras en botones y navegación, 16 px en paneles, 14 px en las baldosas del stack |
+| **Marca** | «IV» en verde, la misma en el menú y en el favicon |
+
+### Hologramas
+
+Tres hologramas de partículas, escritos a mano en **WebGL** (sin Three.js ni otras librerías):
+
+1. **Hero**: hasta 9.000 partículas verdes forman «IV», «</>» o una esfera. Cambian de forma solas cada 7 s, con un clic o con los botones. El ratón aparta las partículas e inclina el holograma, y una banda de escaneo lo recorre.
+2. **Contacto**: un segundo holograma, más pequeño, bajo «Disponible para proyectos».
+3. **Stack**: cada logo de herramienta es un holograma con **sus colores reales**, sacados de los píxeles del SVG original (Claude naranja, SQL verde, Java rojo y azul…). Al pasar el ratón, gira y se abre.
+
+<div align="center">
+<img src="docs/preview-stack.jpg" alt="Apartado del stack: barras de nivel y los logos de las herramientas convertidos en hologramas de partículas con sus colores reales" width="900">
+<br>
+<sub>Stack · cada logo es un holograma de partículas con sus colores reales</sub>
+</div>
+
 ## ✨ Características
 
 | Área | Detalle |
 | --- | --- |
-| **Diseño** | Fondo negro puro con acento verde. Hologramas 3D de partículas en el hero, en Contacto y en los logos del stack (WebGL propio, sin librerías). Código con colores de editor oscuro (One Dark). Tipografías autoalojadas: **Archivo** variable (titulares), **Hubot Sans** (texto) y **JetBrains Mono** (código). |
-| **Paneles de código** | Todo el código mostrado es real, sacado de mis repos, con resaltado de sintaxis propio y números de línea. |
-| **Interacción** | El programa de *Variables* del hero se ejecuta y muestra su salida; los 5 ejercicios de Java se exploran como pestañas; botones para copiar el email y los datos. |
+| **Paneles de código** | Todo el código mostrado es real, sacado de mis repos, con resaltado de sintaxis propio, números de línea y colores de editor oscuro. |
+| **Interacción** | Los 5 ejercicios de Java se exploran como pestañas y se ejecutan; botones para copiar el email y los datos; hologramas que responden al ratón y al toque. |
 | **Proyectos** | Capturas reales de las dos webs publicadas (Servitek y Solca) y el banner del Kit VibeCoding Pro. |
-| **Responsive** | Un único módulo prosa \| panel que pasa a una columna en `900px`; menú a pantalla completa en `760px`; ajustes finos en `560px`. |
-| **Accesibilidad** | HTML semántico, contraste AA, *skip link*, foco visible, pestañas ARIA con teclado, menú móvil con Esc, contenido legible sin JavaScript y soporte de `prefers-reduced-motion`. |
+| **Navegación** | Barra flotante con píldora verde que se desliza a la sección activa; se esconde al bajar y vuelve al subir. En móvil, menú a pantalla completa. |
+| **Responsive** | Módulo prosa \| panel que pasa a una columna en `900px`; menú a pantalla completa en `760px`; ajustes finos en `560px`. |
+| **Accesibilidad** | HTML semántico, contraste AA, *skip link*, foco visible, pestañas ARIA con teclado, botones alternativos para los hologramas, menú móvil con Esc, contenido legible sin JavaScript y soporte de `prefers-reduced-motion`. |
 | **SEO / Social** | `title`, `meta description`, `theme-color`, Open Graph y Twitter Card, favicon + apple-touch-icon. |
-| **Rendimiento** | Imágenes optimizadas y con `loading="lazy"`, sin librerías externas, CSS y JS sin procesar. |
+| **Rendimiento** | Sin librerías externas; los hologramas se pausan fuera de pantalla o con la pestaña oculta y usan menos partículas en móvil; imágenes con `loading="lazy"`. |
 
 ### Movimiento
 
-1. **Holograma 3D del hero**: unas 9.000 partículas forman «IV», «</>» o una esfera y cambian de forma solas, con un clic o con los botones. El ratón aparta las partículas e inclina el holograma; una banda de escaneo lo recorre.
-2. **Entrada y profundidad**: el nombre sube desde su máscara y se ensancha; al bajar, el texto del hero se aleja más rápido que el holograma.
-3. **Programas ejecutables**: el hero y los 5 ejercicios de Java escriben `java Main.java` y muestran su salida real; el de `Scanner` te pide el nombre y te saluda.
-4. Títulos cuyas palabras suben y se ensanchan, paneles que entran inclinados en 3D y barra de navegación con píldora deslizante (menú a pantalla completa en móvil).
-5. Barras de nivel con contador, barra de progreso de lectura y subrayado del menú con *scrollspy*.
+1. **Entrada del hero**: «Ivan» y «Vera» suben desde su máscara mientras se ensanchan; después aparecen la presentación y los botones.
+2. **Profundidad al bajar**: el texto del hero se aleja más rápido que el holograma, que se desvanece.
+3. **Títulos**: cada palabra sube y se ensancha (eje de anchura de Archivo); los paneles entran inclinados en 3D y se enderezan.
+4. **Programas ejecutables**: los 5 ejercicios escriben `java Main.java` y muestran su salida real; el de `Scanner` te pide el nombre y te saluda. Al cambiar de ejercicio, el panel se revela de abajo arriba.
+5. Barras de nivel con contador, barra de progreso de lectura y menú con *scrollspy*.
 6. Capturas de proyectos y foto con inclinación 3D y reflejo que sigue al ratón.
-8. **Stack en holograma**: cada logo de herramienta es un holograma 3D de partículas con sus colores reales; al pasar el ratón gira y se abre.
-7. Microinteracciones: pulsación de botones, flechas externas, confirmación de «Copiado».
+7. Microinteracciones: botones magnéticos que se rellenan desde el punto por donde entra el ratón, flechas externas, confirmación de «Copiado».
 
-> El holograma se pausa fuera de pantalla o con la pestaña oculta y usa menos partículas en móvil. Con
-> «movimiento reducido» no hay desplazamientos: todo aparece ya completo.
-
-<div align="center">
-<img src="docs/preview-stack.jpg" alt="Apartado de proyectos con las capturas de Servitek y Solca" width="900">
-<br>
-<sub>Proyectos · capturas reales de las webs publicadas</sub>
-</div>
+> Con «movimiento reducido» no hay desplazamientos: los hologramas quedan quietos y todo aparece ya completo.
 
 ## 📁 Estructura
 
@@ -71,11 +94,11 @@ incrustado y vías de contacto directo.
 Ivanvera-web/
 ├── index.html          # Estructura y todos los contenidos
 ├── styles.css          # Sistema visual, componentes y responsive
-├── script.js           # Resaltado, ejecución del hero, pestañas, copiar, nav (IIFE, vanilla JS)
+├── script.js           # Hologramas WebGL, resaltado, ejercicios ejecutables, pestañas, copiar, nav (IIFE, vanilla JS)
 ├── scripts/check.mjs   # Verificación sin dependencias (también en CI)
 ├── AGENTS.md           # Contexto para agentes de IA (CLAUDE.md lo importa)
 ├── PRODUCT.md          # A quién va dirigida la web y qué no se debe inventar
-├── DESIGN.md           # Sistema de diseño (tokens, tipografía, componentes)
+├── DESIGN.md           # Identidad visual: colores, tipografía, hologramas y componentes
 ├── assets/
 │   ├── avatar.jpg      # Foto de perfil (también usada como og:image)
 │   ├── fonts/          # Archivo, Hubot Sans y JetBrains Mono (woff2 + licencias OFL)
@@ -87,8 +110,8 @@ Ivanvera-web/
 │   ├── favicon.png             # Versión grande (512×512)
 │   └── apple-touch-icon.png    # Icono para iOS (180×180)
 ├── docs/
-│   ├── preview.jpg             # Captura del hero (este README)
-│   ├── preview-stack.jpg       # Captura del apartado de proyectos
+│   ├── preview.jpg             # Captura del hero con el holograma (este README)
+│   ├── preview-stack.jpg       # Captura del stack con los logos en holograma
 │   └── superpowers/specs/      # Especificación de diseño
 └── .gitignore
 ```
@@ -98,6 +121,7 @@ Ivanvera-web/
 - **HTML5** semántico
 - **CSS3**: variables, grid/flex, `clamp()`, fuentes variables (peso y anchura), `@font-face` autoalojado
 - **JavaScript ES6+** sin dependencias (DOM, `IntersectionObserver`, `requestAnimationFrame`)
+- **WebGL 1** escrito a mano para los hologramas de partículas (shaders propios, sin librerías)
 - **Embeds oficiales de Instagram** (`instagram.com/embed.js`)
 
 ### Iconos y favicon
@@ -169,6 +193,7 @@ GitHub Pages reconstruye el sitio automáticamente (1–2 minutos).
 | Textos, proyectos, enlaces y embeds | `index.html` |
 | Colores, tipografía y animación CSS | `styles.css` → bloque `:root` (documentado en `DESIGN.md`) |
 | Comportamiento de las animaciones | `script.js` |
+| Formas y tamaño de los hologramas | `script.js` → `makeHologram` (formas «IV», «</>», esfera) y sección 6b (logos del stack) |
 | Foto de perfil | `assets/avatar.jpg` (misma usada en `og:image`) |
 | Logos del stack | `assets/logos/*.svg` (lista en `index.html` → `.tools`) |
 | Favicon | `favicon/favicon.svg` → regenerar los PNG de `favicon/` a partir de él |
